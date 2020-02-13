@@ -1,8 +1,4 @@
-extern crate uint;
-use uint::construct_uint;
-construct_uint! {
-	pub struct U256(4);
-}
+use bigint::uint::U256;
 
 #[derive(Debug, Copy, Clone)]
 struct Point {
@@ -22,25 +18,6 @@ impl Point {
         Point::new(U256{0: [x, 0, 0, 0]}, U256{0: [y, 0, 0, 0]})
     }
 
-    fn slope_tangent() {}
-
-    fn point_double(a: U256) {
-
-    }
-}
-fn mod_inv(a: i32, module: i32) -> i32 {
-  let mut mn = (module, a);
-  let mut xy = (0, 1);
- 
-  while mn.1 != 0 {
-    xy = (xy.1, xy.0 - (mn.0 / mn.1) * xy.1);
-    mn = (mn.1, mn.0 % mn.1);
-  }
- 
-  while xy.0 < 0 {
-    xy.0 += module;
-  }
-  xy.0
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -80,37 +57,26 @@ impl EllipticCurve {
 }
 
 
-fn test() {
-}
-pub fn egcd(a: U256, b: U256) -> (U256, U256, U256) {
-    assert!(a < b);
-    let zero = U256{0: [0, 0, 0, 0]};
-    if a == zero {
-        return (b, zero, zero);
-    }
-    else {
-        let (g, x, y) = egcd(b % a, a);
-        return (g, y - (b / a) * x, x);
-    }
+fn slope_tangent(x: U256, y: U256, a: U256) -> U256 {
+    let n = (U256::from(3) * x.pow(U256::from(2))) + U256::from(2);
+    ((n % a) * (U256::from(2) * y).mod_inverse(a)) % a
 }
 
-pub fn modinverse(a: U256, m: U256) -> Option<U256> {
-    let (g, x, _) = egcd(a, m);
-    println!("{:?}", g);
-    println!("{:?}", x);
-    let one = U256{0: [1, 0, 0, 0]};
-    if g != one {
-        return None;
-    }
-    else {
-        return Some(x % m);
-    }
+
+fn point_double(x: U256, y: U256, a: U256) {
+    let s = slope_tangent(x, y, a);
+    let x2 = (s.pow(U256::from(2)) - (U256::from(2) * x)) % a;
+    // let y2 = (((s * x) - (s * x2)) - y) % a;
+    let y2 = x - x2;
+    println!("{:?}", x2);
+    println!("{:?}", y2);
+
 }
+
 
 fn main() {
     let a = EllipticCurve::new_small(17, 2, 2, 5, 1, 19, 1);
     let b = U256{0: [2, 0, 0, 0]};
     let c = U256{0: [17, 0, 0, 0]};
-    println!("test {:?}", b % c);
-    println!("test {:?}", modinverse(b, c));
+    println!("test {:?}", point_double(U256::from(5), U256::from(1), U256::from(17)));
 }
